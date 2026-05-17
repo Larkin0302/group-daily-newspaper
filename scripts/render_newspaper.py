@@ -21,6 +21,38 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+try:
+    from PIL import Image
+    _has_pil = True
+except ImportError:
+    _has_pil = False
+
+
+def auto_img_style(image_path, target_width_px=None, max_height_px=None):
+    """读图算实际比例，注入 inline width/height style 让 figure 不变形。
+
+    target_width_px: 目标显示宽度（A3 内常用 480/600/1090）
+    max_height_px: 最大允许高度（防溢出）
+    返回 'width:Wpx;height:Hpx;object-fit:cover;' 这种 style 字符串
+    """
+    if not _has_pil or not image_path or not image_path.startswith('file://'):
+        return ''
+    p = image_path.replace('file://', '')
+    try:
+        with Image.open(p) as img:
+            w, h = img.size
+    except Exception:
+        return ''
+    aspect = w / h if h else 1
+    if target_width_px:
+        disp_w = target_width_px
+        disp_h = int(disp_w / aspect)
+        if max_height_px and disp_h > max_height_px:
+            disp_h = max_height_px
+            disp_w = int(disp_h * aspect)
+        return f'width:{disp_w}px;height:{disp_h}px;object-fit:contain;'
+    return ''
+
 
 def autosize_banner_title(theme_title_html):
     """根据 pbt-deck 副标字数自动注入 font-size，让单行装得下最优先。
@@ -243,7 +275,7 @@ def render_page_1(story, avatars, plan):
     <aside class="side col-span-4 p1-aside">
 
       <figure class="codex-figure">
-        <img src="{h(fig['image'])}" alt="{h(fig.get('alt',''))}" />
+        <img src="{h(fig['image'])}" alt="{h(fig.get('alt',''))}" style="{h(fig.get('img_style',''))}" />
         <figcaption>
           <div class="cf-eyebrow">{h(fig['eyebrow'])}</div>
           <div class="cf-text">{h(fig['text'])}</div>
@@ -353,7 +385,7 @@ def render_page_2(story, avatars, plan, page_key="page2"):
       <div class="pc-eyebrow">{h(pc['eyebrow'])}</div>
 
       <figure class="person-card-figure">
-        <img src="{h(pc['image'])}" alt="{h(pc.get('alt',''))}" />
+        <img src="{h(pc['image'])}" alt="{h(pc.get('alt',''))}" style="{h(pc.get('img_style',''))}" />
       </figure>
 
       <div class="pc-quote-block">
@@ -455,7 +487,7 @@ def render_page_3(story, avatars, plan, page_key="page3"):
   </h2>
 
   <figure class="banner-image-top">
-    <img src="{h(bi['image'])}" alt="{h(bi.get('alt',''))}" />
+    <img src="{h(bi['image'])}" alt="{h(bi.get('alt',''))}" style="{h(bi.get('img_style',''))}" />
     <figcaption>
       <div class="bit-eyebrow">{h(bi['eyebrow'])}</div>
       <div class="bit-title">{h(bi['title'])}</div>
@@ -890,7 +922,8 @@ html, body {
 .p1-hero { border-right: 1px solid rgba(0,0,0,0.3); display: flex; flex-direction: column; }
 .p1-aside { display: flex; flex-direction: column; padding-left: 6px; }
 .codex-figure { margin-bottom: 12px; display: flex; flex-direction: column; }
-.codex-figure img { width: 100%; display: block; border: 1.5px solid #000; height: 360px; object-fit: contain; background: #2a3344; }
+/* v2.2: figure 默认按图片比例自适应；可通过 layout-plan figure.style 覆盖 */
+.codex-figure img { width: 100%; display: block; border: 1.5px solid #000; max-height: 420px; object-fit: contain; background: #2a3344; }
 .codex-figure figcaption { padding: 6px 2px 8px; border-bottom: 1px solid rgba(0,0,0,0.3); }
 .cf-eyebrow { font-family: "Old Standard TT", serif; font-size: 10px; letter-spacing: 4px; color: #c41e1e; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
 .cf-text { font-family: "Noto Serif SC", serif; font-size: 10.5px; line-height: 1.55; text-align: justify; color: #000; }
@@ -928,7 +961,8 @@ html, body {
 .person-card-col { display: flex; flex-direction: column; padding-right: 14px; border-right: 1px solid rgba(0,0,0,0.3); }
 .pc-eyebrow { font-family: "Old Standard TT", serif; font-size: 10.5px; letter-spacing: 5px; color: #c41e1e; font-weight: 700; text-transform: uppercase; text-align: center; padding-bottom: 6px; border-bottom: 2px solid #c41e1e; margin-bottom: 8px; }
 .person-card-figure { margin-bottom: 10px; }
-.person-card-figure img { width: 100%; display: block; border: 1.5px solid #000; height: 530px; object-fit: cover; object-position: center top; }
+/* v2.2: 高度可被 layout-plan person_card.style 覆盖 */
+.person-card-figure img { width: 100%; display: block; border: 1.5px solid #000; max-height: 600px; object-fit: cover; object-position: center top; }
 .pc-quote-block { background: #1f2d4a; color: #fdfcf8; padding: 10px 12px; margin-bottom: 10px; }
 .pc-qb-title { font-family: "Noto Sans SC", sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; line-height: 1.4; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.3); color: #fdfcf8; }
 .jl-line { display: flex; gap: 8px; align-items: baseline; margin-bottom: 5px; }
@@ -966,7 +1000,8 @@ html, body {
 
 /* 第 3 版 · banner-image */
 .banner-image-top { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 14px; border: 1.5px solid #000; padding: 0; background: #fdfcf8; }
-.banner-image-top img { width: 100%; height: 280px; display: block; object-fit: cover; border-right: 1.5px solid #000; }
+/* v2.2: 高度自适应，可被 layout-plan banner_image.style 覆盖 */
+.banner-image-top img { width: 100%; max-height: 420px; display: block; object-fit: cover; border-right: 1.5px solid #000; }
 .banner-image-top figcaption { padding: 14px 16px 14px 4px; display: flex; flex-direction: column; justify-content: center; }
 .bit-eyebrow { font-family: "Old Standard TT", serif; font-size: 11px; letter-spacing: 5px; color: #c41e1e; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
 .bit-title { font-family: "Songti SC", "Noto Serif SC", serif; font-size: 22px; font-weight: 900; letter-spacing: 2px; line-height: 1.25; margin-bottom: 8px; color: #000; }

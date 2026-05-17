@@ -104,18 +104,38 @@ grep -A 3 -B 3 "<图发送时间附近 ±10 分钟>" /tmp/chat_log_xxx.txt
 
 读图的上下文消息，判断这张图对应 timeline 哪个故事节点 / 哪个版的主题。
 
-#### 2.3 整理候选图清单
+#### 2.3 必跑 image probe（v2.2 新增）— 让 layout 按图本身比例排，不再硬塞
+
+```bash
+python3 ~/.claude/skills/group-daily-newspaper/scripts/image_probe.py \
+   /tmp/<群名>_images/ --date YYYYMMDD --min-kb 20 > /tmp/image_probe.json
+```
+
+输出每张图的：
+- `width / height / aspect / shape` (landscape/portrait/square)
+- `kb`（过滤掉 <30KB 的极小图/表情）
+- `suggested_layout.role` → `hero-figure / banner-image / person-card / qr / inline-narrow / decoration`
+- `suggested_layout.max_width_px / display_height_px`（按 A3 1090 px 内容宽算好的）
+
+**AI 必须按 probe 输出决策**——选哪张图、放哪个版、用多大显示尺寸。**禁止套用「banner 全 280px / hero 全 360px」这种硬模板**。
+
+#### 2.4 整理候选图清单
 
 为每张可用图记录：
 
 ```
-图 1：/tmp/dxb_images/20260515_094325_xxx.png
-  类型：截屏对话（Codex 移动版设置引导）
-  上下文：5/15 09:43 Rosia 推群日报同时收到 Codex 移动版引导
-  匹配主题：第 1 版「老 Codex 进手机的那一夜」
-  建议位置：hero 主稿现场直击图
-  尺寸建议：竖图 240×320 px
+图 1：/tmp/.../20260511_213357_xxx.png
+  probe: 1920x1080 landscape, 824KB → role=banner-image, display 1090×614
+  类型（AI 读完图判断）：终端截图（Claude 解密微信现场）
+  上下文（grep ±10 分钟）：21:33 祥瑞「claude解密微信聊天记录成功了」
+  匹配主题：第 1 版头条「微信解密 CLI 诞生之夜」
+  建议位置：page1 aside.figure 主稿配图
+  layout-plan 写法：
+    "image": "file:///tmp/.../xxx.png",
+    "img_style": "width:480px;height:270px;object-fit:cover;"
 ```
+
+**figure/banner_image/person_card 都支持 img_style 字段**（v2.2），直接写 inline CSS 覆盖 CSS 默认值。这样实现"按图比例自由排"而不是"套模板"。
 
 ### Step 3：AI 写版面规划 layout-plan.json
 
