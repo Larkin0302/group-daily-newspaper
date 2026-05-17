@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+
+# 测试输出
+.DS_Store
+/tmp/
+*.png.bak
+*.html.bak
+
+# IDE
+.vscode/
+.idea/
+
+# 用户私有的真实群数据（绝不上传 GitHub）
+# 渲染产物
+*-报纸版.html
+*-报纸版.pdf
+# layout-plan 含真实群名/人名/对话，禁止上传
+layout-plan-2*.json
+!examples/layout-plan-template.json
+# story.json 含真实聊天/人名/wxid
+story_2*.json
+2026-*.json
+# 群图片导出目录
+*_images/
