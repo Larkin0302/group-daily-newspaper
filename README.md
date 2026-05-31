@@ -121,7 +121,6 @@ grep -rn "wxid_\|@chatroom\|真群名\|真人名" .
 
 MIT
 
-
 ---
 
 ## 关于万涂幻象 · About Vantasma
@@ -131,6 +130,7 @@ MIT
 | | |
 |---|---|
 | 🌐 个人主页 Homepage | https://www.xiangruiai.com |
+| 🏠 社区主页（关于我们 · 模板中心 · 57 课） | https://vantasma.feishu.cn/wiki/MC1nwBft0izODokXe4acHKjZnsh |
 | 📚 开源知识库（飞书 Wiki · 311+ 篇） | https://vantasma.feishu.cn/wiki/space/7574356946532925441 |
 | 🎓 57 课 · 多维表格小白课 | https://vantasma.feishu.cn/wiki/A1CNwAZQSisdSMkuwp1c3r1ontf |
 | 💬 多维表格交流社区（飞书群） | https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=3c8gcd32-517d-43a7-85a0-a20c24332959 |
